@@ -15,6 +15,7 @@ import CustomText from "../components/CustomText";
 import { auth, getAlarmData } from "../firebaseConfig.mjs";
 import alarmStore from "../store/alarmStore";
 import userStore from "../store/userStore";
+import { getGithubUser } from "../utils/api";
 import { requestIgnoreBatteryOptimizations } from "../utils/batteryOptimization";
 import { createTokenWithCode } from "../utils/createTokenWithCode";
 
@@ -51,20 +52,24 @@ export default function Login() {
 
       if (!access_token) return;
 
-      if (access_token) {
+      const { login } = await getGithubUser(access_token);
+
+      console.log(login);
+
+      if (access_token && userData) {
         await AsyncStorage.setItem("github_access_token", access_token);
+        await AsyncStorage.setItem("github_login_user", login);
       }
 
-      const credential = GithubAuthProvider.credential(access_token);
-
       setUserAccessToken(access_token);
+      setUserId(login);
+
+      const credential = GithubAuthProvider.credential(access_token);
 
       await signInWithCredential(auth, credential);
 
       onAuthStateChanged(auth, async (user) => {
         const allAlarmData = await getAlarmData(user.uid);
-
-        setUserId(user.providerData[0].uid);
 
         setAllAlarmData(allAlarmData[user.uid]);
       });
@@ -79,10 +84,12 @@ export default function Login() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const accessToken = await AsyncStorage.getItem("github_access_token");
+        const { login } = await getGithubUser(accessToken);
 
         setUserAccessToken(accessToken);
+        setUserId(login);
+
         setAllAlarmData(await getAlarmData(user.uid));
-        setUserId(user.providerData[0].uid);
 
         router.replace("/AlarmList");
       }

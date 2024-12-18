@@ -17,18 +17,35 @@ import {
   stopBackgroundTask,
 } from "../service/backgroundService";
 import alarmStore from "../store/alarmStore";
+import userStore from "../store/userStore";
+import { fetchUserRepos } from "../utils/api";
+
+SystemUI.setBackgroundColorAsync("#404040");
 
 export default function AlarmList() {
   const { allAlarmData } = alarmStore();
+  const { userAccessToken, userId, userRepos, setUserRepos } = userStore();
   const router = useRouter();
-
-  SystemUI.setBackgroundColorAsync("#404040");
 
   const checkRunningStatus = async () => {
     if (allAlarmData !== null) {
       startBackgroundTask(allAlarmData);
     }
   };
+
+  useEffect(() => {
+    const getUserRepos = async () => {
+      try {
+        const userRepos = await fetchUserRepos(userId, userAccessToken);
+
+        setUserRepos(userRepos);
+      } catch (error) {
+        console.error("Error fetching repos:", error);
+      }
+    };
+
+    getUserRepos();
+  }, []);
 
   useEffect(() => {
     checkRunningStatus();
@@ -96,50 +113,52 @@ export default function AlarmList() {
     });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.alarmListBox}>
-        <View style={styles.alarmListTitleBox}>
-          <CustomText text="알람" style={styles.alarmListTitle} />
+    <View style={{ backgroundColor: "#404040", width: "100%", height: "100%" }}>
+      <View style={styles.container}>
+        <View style={styles.alarmListBox}>
+          <View style={styles.alarmListTitleBox}>
+            <CustomText text="알람" style={styles.alarmListTitle} />
+          </View>
+          {allAlarmData ? (
+            <>
+              <ScrollView
+                style={{
+                  width: "95%",
+                  marginTop: 70,
+                }}
+              >
+                {alarmItems}
+              </ScrollView>
+            </>
+          ) : (
+            <CustomText
+              text="알람을 추가하세요!"
+              style={{ fontSize: 20, color: "#C4C4C4" }}
+            />
+          )}
         </View>
-        {allAlarmData ? (
-          <>
-            <ScrollView
-              style={{
-                width: "95%",
-                marginTop: 70,
-              }}
-            >
-              {alarmItems}
-            </ScrollView>
-          </>
-        ) : (
-          <CustomText
-            text="알람을 추가하세요!"
-            style={{ fontSize: 20, color: "#C4C4C4" }}
+        <TouchableOpacity
+          onPressIn={() => router.push("/AddAlarm")}
+          style={styles.addButton}
+        >
+          <Image
+            source={require("../assets/plusButton.png")}
+            style={styles.addButtonImg}
           />
-        )}
-      </View>
-      <TouchableOpacity
-        onPressIn={() => router.push("/AddAlarm")}
-        style={styles.addButton}
-      >
-        <Image
-          source={require("../assets/plusButton.png")}
-          style={styles.addButtonImg}
-        />
-      </TouchableOpacity>
-      <View style={{ flex: 0, left: 200 }}>
-        <Button
-          title=" "
-          color="#404040"
-          style={{
-            width: 1,
-            height: 1,
-            margin: 0,
-            padding: 0,
-            position: "absolute",
-          }}
-        />
+        </TouchableOpacity>
+        <View style={{ flex: 0, left: 200 }}>
+          <Button
+            title=" "
+            color="#404040"
+            style={{
+              width: 1,
+              height: 1,
+              margin: 0,
+              padding: 0,
+              position: "absolute",
+            }}
+          />
+        </View>
       </View>
     </View>
   );
