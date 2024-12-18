@@ -1,5 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { makeRedirectUri, useAuthRequest } from "expo-auth-session";
 import { router } from "expo-router";
+import * as SystemUI from "expo-system-ui";
 import * as webBrowser from "expo-web-browser";
 import {
   GithubAuthProvider,
@@ -12,9 +14,9 @@ import CustomButton from "../components/Custombutton";
 import CustomText from "../components/CustomText";
 import { auth, getAlarmData } from "../firebaseConfig.mjs";
 import alarmStore from "../store/alarmStore";
+import userStore from "../store/userStore";
 import { requestIgnoreBatteryOptimizations } from "../utils/batteryOptimization";
 import { createTokenWithCode } from "../utils/createTokenWithCode";
-import * as SystemUI from "expo-system-ui";
 
 SystemUI.setBackgroundColorAsync("#404040");
 
@@ -28,6 +30,7 @@ const discovery = {
 
 export default function Login() {
   const { setAllAlarmData } = alarmStore();
+  const { setUserAccessToken, setUserId } = userStore();
   const [request, response, promptAsync] = useAuthRequest(
     {
       clientId: process.env.EXPO_PUBLIC_GITHUB_CLIENT_ID,
@@ -48,11 +51,20 @@ export default function Login() {
 
       if (!access_token) return;
 
+      if (access_token) {
+        await AsyncStorage.setItem("github_access_token", access_token);
+      }
+
       const credential = GithubAuthProvider.credential(access_token);
+
+      setUserAccessToken(access_token);
+
       await signInWithCredential(auth, credential);
 
       onAuthStateChanged(auth, async (user) => {
         const allAlarmData = await getAlarmData(user.uid);
+
+        setUserId(user.providerData[0].uid);
 
         setAllAlarmData(allAlarmData[user.uid]);
       });
@@ -66,7 +78,11 @@ export default function Login() {
   useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        const accessToken = await AsyncStorage.getItem("github_access_token");
+
+        setUserAccessToken(accessToken);
         setAllAlarmData(await getAlarmData(user.uid));
+        setUserId(user.providerData[0].uid);
 
         router.replace("/AlarmList");
       }
