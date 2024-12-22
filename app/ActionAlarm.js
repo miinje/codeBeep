@@ -1,13 +1,16 @@
 import { useRouter } from "expo-router";
-import { BackHandler, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { BackHandler, StyleSheet, Text, TextInput, View } from "react-native";
 import CustomButton from "../components/Custombutton";
 import CustomText from "../components/CustomText";
 import alarmStore from "../store/alarmStore";
 import { stopAudio } from "../utils/audioPlayer";
-import { useEffect } from "react";
 
 export default function ActionAlarm() {
-  const { currentTime, setIsTimeMatched, setCurrentTime } = alarmStore();
+  const { currentTime, alarmTestCode, setIsTimeMatched, setCurrentTime } =
+    alarmStore();
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef();
   const router = useRouter();
 
   const handleClickDone = async () => {
@@ -20,7 +23,7 @@ export default function ActionAlarm() {
   };
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
+    setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
   });
@@ -58,9 +61,45 @@ export default function ActionAlarm() {
         </View>
         <CustomText text="일어날 시간이에요!" style={{ fontSize: 15 }} />
       </View>
-      <View style={styles.buttonBox}>
+      <View
+        style={{
+          flex: 4,
+          gap: 20,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <View style={{ flex: 0, gap: 5 }}>
+          <Text
+            style={{
+              width: 200,
+              height: 100,
+              color: "#fff",
+              borderColor: "#fff",
+              borderWidth: 2,
+              padding: 10,
+            }}
+          >{`${alarmTestCode}`}</Text>
+          <TextInput
+            ref={inputRef}
+            onChangeText={(value) => setInputValue(value)}
+            defaultValue={inputValue}
+            placeholder={alarmTestCode}
+            placeholderTextColor="#ACACAC"
+            multiline={inputValue.length !== alarmTestCode.length}
+            style={{
+              width: 200,
+              height: 100,
+              color: "#fff",
+              borderColor: "#fff",
+              borderWidth: 2,
+              padding: 5,
+            }}
+          />
+        </View>
         <CustomButton title="완료!" onPress={handleClickDone} />
       </View>
+      <View style={styles.buttonBox}></View>
     </View>
   );
 }
@@ -71,7 +110,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#404040",
-    gap: 10,
+    margin: 5,
   },
   titleText: {
     fontSize: 80,
@@ -84,8 +123,8 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   topBox: {
-    flex: 3,
-    gap: 5,
+    flex: 2,
+    gap: 6,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -93,6 +132,5 @@ const styles = StyleSheet.create({
     flex: 2,
     alignItems: "center",
     justifyContent: "flex-end",
-    marginBottom: 40,
   },
 });

@@ -47,36 +47,38 @@ export default function Login() {
 
   async function handleResponse() {
     if (response.type === "success") {
-      const { code } = response.params;
-      const { access_token } = await createTokenWithCode(code);
+      try {
+        const { code } = response.params;
+        const { access_token } = await createTokenWithCode(code);
 
-      if (!access_token) return;
+        if (!access_token) return;
 
-      const { login } = await getGithubUser(access_token);
+        const { login } = await getGithubUser(access_token);
 
-      console.log(login);
+        if (access_token && login) {
+          await AsyncStorage.setItem("github_access_token", access_token);
+          await AsyncStorage.setItem("github_login_user", login);
+        }
 
-      if (access_token && userData) {
-        await AsyncStorage.setItem("github_access_token", access_token);
-        await AsyncStorage.setItem("github_login_user", login);
+        setUserAccessToken(access_token);
+        setUserId(login);
+
+        const credential = GithubAuthProvider.credential(access_token);
+
+        await signInWithCredential(auth, credential);
+
+        onAuthStateChanged(auth, async (user) => {
+          const allAlarmData = await getAlarmData(user.uid);
+
+          setAllAlarmData(allAlarmData[user.uid]);
+        });
+
+        requestIgnoreBatteryOptimizations();
+
+        router.replace("/AlarmList");
+      } catch (error) {
+        console.error(error.message);
       }
-
-      setUserAccessToken(access_token);
-      setUserId(login);
-
-      const credential = GithubAuthProvider.credential(access_token);
-
-      await signInWithCredential(auth, credential);
-
-      onAuthStateChanged(auth, async (user) => {
-        const allAlarmData = await getAlarmData(user.uid);
-
-        setAllAlarmData(allAlarmData[user.uid]);
-      });
-
-      requestIgnoreBatteryOptimizations();
-
-      router.replace("/AlarmList");
     }
   }
 
@@ -84,6 +86,7 @@ export default function Login() {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const accessToken = await AsyncStorage.getItem("github_access_token");
+        // const accessToken = process.env.EXPO_PUBLIC_GITHUB_TOKEN;
         const { login } = await getGithubUser(accessToken);
 
         setUserAccessToken(accessToken);
@@ -108,9 +111,9 @@ export default function Login() {
           style={styles.bubbles}
         >
           <View style={styles.bubblesBox}>
-            <CustomText text="자바스크립트 파일이" textColor="#000000" />
-            <CustomText text="있는 리포지토리가" textColor="#000000" />
-            <CustomText text="있어야 해요! >_" textColor="#000000" />
+            <CustomText text="자신이 썼던 코드를" textColor="#000000" />
+            <CustomText text="기억하시나요...?" textColor="#000000" />
+            <CustomText text="테스트 해 보세요!" textColor="#000000" />
           </View>
         </ImageBackground>
         <Image

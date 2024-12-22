@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import BackgroundService from "react-native-background-actions";
 import { convertingDay } from "../utils/convertingDay";
+import { playAudio } from "../utils/audioPlayer";
 
 const sleep = (time) => new Promise((resolve) => setTimeout(resolve, time));
 
@@ -35,6 +36,8 @@ const checkTimeInBackground = async (taskDataArguments) => {
           checkingAlarm[selectedTime] = selectedTime;
           checkingAlarm[selectedDays] = selectedDays;
           checkingAlarm[selectedTitle] = selectedTitle;
+
+          playAudio();
 
           router.replace("/ActionAlarm");
         }

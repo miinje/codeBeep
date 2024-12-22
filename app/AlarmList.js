@@ -18,7 +18,7 @@ import {
 } from "../service/backgroundService";
 import alarmStore from "../store/alarmStore";
 import userStore from "../store/userStore";
-import { fetchUserRepos } from "../utils/api";
+import { fetchUserRepos, getRandomElement, getRepoFiles } from "../utils/api";
 
 SystemUI.setBackgroundColorAsync("#404040");
 
@@ -34,6 +34,26 @@ export default function AlarmList() {
   };
 
   useEffect(() => {
+    checkRunningStatus();
+  }, []);
+
+  useEffect(() => {
+    if (userRepos.length !== 0 && userId) {
+      const randomRepoFiles = async () => {
+        const randomRepoName = getRandomElement(userRepos);
+
+        const randomFiles = await getRepoFiles(userId, randomRepoName);
+
+        console.log(randomFiles);
+
+        return randomFiles;
+      };
+
+      randomRepoFiles();
+    }
+  }, []);
+
+  useEffect(() => {
     const getUserRepos = async () => {
       try {
         const userRepos = await fetchUserRepos(userId, userAccessToken);
@@ -45,10 +65,6 @@ export default function AlarmList() {
     };
 
     getUserRepos();
-  }, []);
-
-  useEffect(() => {
-    checkRunningStatus();
   }, []);
 
   useEffect(() => {
@@ -138,7 +154,7 @@ export default function AlarmList() {
           )}
         </View>
         <TouchableOpacity
-          onPressIn={() => router.push("/AddAlarm")}
+          onPressIn={async () => router.push("/AddAlarm")}
           style={styles.addButton}
         >
           <Image
